@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safety With You - Grindrod</title>
+    <!-- Tailwind CSS CDN para Estilização Rápida -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Biblioteca Oficial para Gerar PDF diretamente no Navegador / Telemóvel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 min-h-screen flex flex-col justify-between selection:bg-blue-200">
+
+    <!-- 1. ECRÃ DE LOGIN / ENTRADA -->
+    <div id="screen-login" class="flex-1 flex flex-col items-center justify-center p-6 space-y-6 max-w-md mx-auto w-full relative">
+        
+        <!-- Seletor de Língua no Login -->
+        <div class="absolute top-4 right-4 z-50">
+            <button onclick="toggleLanguage()" id="lang-btn-login" class="bg-white border border-gray-300 text-slate-700 px-2.5 py-1 rounded text-xs font-bold shadow-sm cursor-pointer hover:bg-gray-50">
+                🌐 EN
+            </button>
+        </div>
+
+        <div class="text-center space-y-2 w-full">
+            <!-- Imagem Oficial do Logo no Login -->
+            <div class="bg-white p-4 rounded-xl shadow-md inline-block mb-2">
+                <img src="logo.png" alt="Grindrod Logo" class="h-20 w-auto object-contain mx-auto">
+            </div>
+            <h1 class="text-2xl font-black text-[#1a365d] tracking-tight uppercase">SAFETY WITH YOU</h1>
+            <p id="t-login-subtitle" class="text-xs text-gray-500 font-medium">Digitalização da Mini Avaliação de Risco</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 w-full space-y-4">
+            <div>
+                <label id="t-login-label" class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Colaborador / Operador</label>
+                <input type="text" id="operator-name" class="w-full p-3 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white" placeholder="Introduza o seu nome completo">
+            </div>
+            <button id="t-login-btn" onclick="startEvaluation()" class="w-full bg-[#1a365d] text-white p-3.5 rounded-lg font-bold shadow hover:bg-blue-900 transition-all active:scale-[0.99] cursor-pointer text-sm tracking-wide">
+                INICIAR AVALIAÇÃO DE CAMPO
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ECRÃS DE FLUXO INTERNO -->
+    <div id="main-flow-container" class="hidden flex-1 flex flex-col">
+        
+        <!-- Header Fixo -->
+        <header class="bg-[#1a365d] text-white p-4 flex items-center justify-between shadow-md h-16 sticky top-0 z-50">
+            <div class="flex flex-col justify-center min-w-0 pr-2">
+                <h1 class="font-bold tracking-wide text-xs sm:text-sm truncate uppercase">SAFETY WITH YOU</h1>
+                <span id="t-header-subtitle" class="text-[9px] block text-gray-300 truncate">Mini Avaliação de Risco</span>
+            </div>
+            
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <button onclick="toggleLanguage()" id="lang-btn-flow" class="bg-[#244b82] border border-blue-400 text-white px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer hover:bg-blue-800">
+                    🌐 EN
+                </button>
+                <div class="bg-white px-2 py-1 rounded flex items-center justify-center h-10 w-24 shadow-sm">
+                    <img src="logo.png" alt="Grindrod Logo" class="h-full w-full object-contain">
+                </div>
+            </div>
+        </header>
+
+        <!-- 2. ECRÃ DE CONSCIENCIALIZAÇÃO (SPIAF / STIAD) -->
+        <div id="screen-spiaf" class="hidden flex-1 p-4 max-w-md mx-auto w-full space-y-4">
+            <div id="spiaf-banner-style" class="border-l-4 border-red-600 bg-red-50 p-3 rounded-r shadow-sm">
+                <h2 id="t-spiaf-title" class="text-sm font-bold text-red-800 uppercase">Mentalidade SPIAF</h2>
+                <p id="t-spiaf-desc" class="text-[11px] text-red-700 mt-0.5">Lembre-se sempre de: <strong>Se Parar Inspecionar Avaliar Fazer!</strong> Pare antes de iniciar qualquer atividade complexa.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border space-y-3">
+                <h3 id="t-spiaf-rules-title" class="text-xs font-bold text-gray-400 uppercase tracking-wider">Regras de Ouro no Terreno</h3>
+                <ul id="t-spiaf-rules-list" class="text-xs space-y-2.5 text-gray-600"></ul>
+            </div>
+
+            <button id="t-spiaf-btn" onclick="changeScreen('screen-form')" class="w-full bg-[#1a365d] text-white p-3 rounded font-bold shadow hover:bg-blue-900 cursor-pointer text-sm">
+                CONCORDAR E AVANÇAR
+            </button>
+        </div>
+
+        <!-- 3. ECRÃ FORMULÁRIO -->
+        <div id="screen-form" class="hidden flex-1 p-4 max-w-md mx-auto w-full space-y-4 pb-8">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h2 id="t-form-title" class="text-base font-bold text-slate-800">2. Avaliação de Campo</h2>
+                <span id="risk-counter" class="bg-gray-400 text-white text-xs font-bold px-2 py-1 rounded-full">0 Riscos</span>
+            </div>
+
+            <!-- EPIs -->
+            <div class="bg-blue-50/60 p-3 rounded-lg border border-blue-200 space-y-2">
+                <div class="flex justify-between items-center">
+                    <h3 id="t-epi-title" class="text-xs font-bold text-slate-700 flex items-center gap-1">⚠️ EPIS BÁSICOS DE TERRENO:</h3>
+                    <button type="button" id="t-epi-btn-all" onclick="checkAllEpi()" class="text-[10px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded border border-blue-300 hover:bg-blue-200">Confirmar Todos</button>
+                </div>
+                <div id="epi-checkboxes-container" class="grid grid-cols-2 gap-2 text-xs"></div>
+            </div>
+
+            <!-- Atividade -->
+            <div class="space-y-1">
+                <label id="t-activity-label" class="block text-xs font-bold text-gray-500 uppercase">O QUE VAI FAZER? (ATIVIDADE)</label>
+                <textarea id="activity-textarea" class="w-full p-2.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 bg-white" rows="2" placeholder="Descreva o trabalho..."></textarea>
+            </div>
+
+            <!-- Riscos -->
+            <div class="space-y-1.5">
+                <label id="t-risks-label" class="block text-xs font-bold text-gray-500 uppercase">RISCOS IDENTIFICADOS</label>
+                <div id="risks-grid" class="grid grid-cols-2 gap-2 text-xs"></div>
+                <div class="flex gap-2 mt-2">
+                    <input type="text" id="new-risk-input" class="flex-1 p-2 border rounded text-xs outline-none bg-white" placeholder="Outro risco...">
+                    <button type="button" onclick="addNewRisk()" class="bg-orange-500 text-white font-bold px-3 rounded hover:bg-orange-600">+</button>
+                </div>
+            </div>
+
+            <!-- Painel de Controlo Inteligente -->
+            <div id="smart-controls-panel" class="hidden bg-blue-50 p-3 rounded-lg border border-blue-200 space-y-1 text-xs text-slate-700">
+                <h3 id="t-matrix-title" class="font-bold text-blue-900 uppercase tracking-wide flex items-center gap-1">🛡️ MEDIDAS DE CONTROLO OBRIGATÓRIAS:</h3>
+                <div id="controls-list" class="space-y-1.5 font-medium mt-1"></div>
+            </div>
+
+            <!-- Risco Geral -->
+            <div class="space-y-1.5">
+                <label id="t-risk-level-label" class="block text-xs font-bold text-gray-500 uppercase">NÍVEL DE RISCO GERAL</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" id="t-btn-low" onclick="setRiskLevel('BAIXO')" class="p-2.5 rounded font-bold border text-xs bg-green-100 border-green-300 text-green-700 hover:bg-green-200 active:bg-green-300 cursor-pointer">BAIXO</button>
+                    <button type="button" id="t-btn-med" onclick="setRiskLevel('MÉDIO')" class="p-2.5 rounded font-bold border text-xs bg-yellow-100 border-yellow-300 text-yellow-700 hover:bg-yellow-200 active:bg-yellow-300 cursor-pointer">MÉDIO</button>
+                    <button type="button" id="t-btn-high" onclick="setRiskLevel('ALTO')" class="p-2.5 rounded font-bold border text-xs bg-red-100 border-red-300 text-red-700 hover:bg-red-200 active:bg-red-300 cursor-pointer">ALTO</button>
+                </div>
+            </div>
+
+            <!-- Alerta -->
+            <div id="alert-risk-level" class="hidden p-3 rounded text-xs font-semibold"></div>
+
+            <div class="flex gap-4 pt-2">
+                <button type="button" id="t-btn-back-1" onclick="changeScreen('screen-spiaf')" class="w-1/3 bg-slate-300 text-slate-700 p-3 rounded font-bold hover:bg-slate-400 cursor-pointer text-sm">Voltar</button>
+                <button type="button" id="btn-next-step" onclick="validateScreenForm()" disabled class="w-2/3 bg-gray-400 text-white p-3 rounded font-bold cursor-not-allowed shadow text-sm">Seguinte</button>
+            </div>
+        </div>
+
+        <!-- 4. ECRÃ DE ASSINATURA E SUBMISSÃO -->
+        <div id="screen-approval" class="hidden flex-1 p-4 max-w-md mx-auto w-full space-y-4">
+            <h2 id="t-approval-title" class="text-base font-bold text-slate-800 border-b pb-1">3. Fecho e Autorização</h2>
+            
+            <div class="bg-white p-3.5 rounded-lg border text-xs space-y-2">
+                <p><span id="t-time-label">⏱️ <strong>Tempo em Campo:</strong></span> <span id="time-elapsed-display" class="font-bold text-blue-700">0m 0s</span></p>
+                <p id="t-time-desc" class="text-gray-500 text-[11px]">O tempo de preenchimento e análise de risco está em conformidade com os regulamentos de HST da Grindrod.</p>
+            </div>
+
+            <!-- Bloco de Assinaturas -->
+            <div class="p-3 border rounded space-y-2 bg-gray-50" id="validation-signature-block">
+                <label id="approval-label" class="block text-xs font-bold uppercase tracking-wide">🔒 Validação</label>
+                <input type="text" id="approver-name" class="w-full p-2 border rounded text-xs outline-none focus:ring-2 focus:ring-blue-500 bg-white" placeholder="">
+            </div>
+
+            <div class="flex gap-4 pt-4">
+                <button type="button" id="t-btn-back-2" onclick="changeScreen('screen-form')" class="w-1/3 bg-slate-300 text-slate-700 p-3 rounded font-bold hover:bg-slate-400 cursor-pointer text-sm">Voltar</button>
+                <button type="button" id="t-btn-submit" onclick="submitForm()" class="w-2/3 bg-emerald-600 text-white p-3 rounded font-bold hover:bg-emerald-700 shadow cursor-pointer text-sm">SUBMETER AGORA</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center text-[10px] text-gray-400 pb-2 mt-auto">
+            Grindrod Safety Digital System © 2026
+        </footer>
+    </div>
+
+
+    <!-- ELEMENTO INVISÍVEL: Estrutura do Layout Usada Apenas para Gerar o PDF Comercial -->
+    <div id="pdf-template" class="hidden bg-white p-8 text-slate-900 text-sm space-y-6" style="width: 750px;">
+        <div class="flex justify-between items-center border-b-2 border-[#1a365d] pb-4">
+            <div>
+                <h1 class="text-xl font-black text-[#1a365d]" id="pdf-title-main">MINI AVALIAÇÃO DE RISCO</h1>
+                <p class="text-xs text-gray-500 font-bold uppercase">Grindrod Operational Safety Report</p>
+            </div>
+            <img src="logo.png" alt="Grindrod" style="height: 50px; width: auto; object-contain: true;">
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded border grid grid-cols-2 gap-4">
+            <p><strong>Operador / Worker:</strong> <span id="pdf-worker-name"></span></p>
+            <p><strong>Nível de Risco / Risk Level:</strong> <span id="pdf-risk-level" class="font-bold"></span></p>
+            <p><strong>Tempo em Campo / Time:</strong> <span id="pdf-time"></span></p>
+            <p><strong>Data de Emissão / Date:</strong> <span id="pdf-date"></span></p>
+        </div>
+
+        <div class="space-y-2">
+            <h3 class="font-bold text-[#1a365d] border-b uppercase text-xs">Descrição da Atividade / Activity Description</h3>
+            <p id="pdf-activity" class="text-gray-700 bg-gray-50 p-3 rounded border italic"></p>
+        </div>
+
+        <div class="space-y-2">
+            <h3 class="font-bold text-[#1a365d] border-b uppercase text-xs">Medidas de Controlo Ativadas / Control Measures</h3>
+            <div id="pdf-controls" class="space-y-1 text-xs text-gray-700 pl-2"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-8 pt-12 text-center text-xs">
+            <div class="border-t border-gray-400 pt-2">
+                <p class="font-bold" id="pdf-worker-sign"></p>
+                <p class="text-gray-400 text-[10px]">Assinatura Digital do Operador / Worker Signature</p>
+            </div>
+            <div class="border-t border-gray-400 pt-2">
+                <p class="font-bold" id="pdf-approver-sign"></p>
+                <p id="pdf-approver-title" class="text-gray-400 text-[10px]"></p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- LÓGICA JAVASCRIPT BILINGUE + MOTOR PDF -->
+    <script>
+        let currentLang = "PT";
+        let currentRiskLevel = "BAIXO";
+        let startTime = null;
+        let customRisksData = {};
+        let finalExecutionTime = "";
+
+               const translations = {
+            PT: {
+                loginSubtitle: "Digitalização da Mini Avaliação de Risco",
+                loginLabel: "Colaborador / Operador",
+                loginPlaceholder: "Introduza o seu nome completo",
+                loginBtn: "INICIAR AVALIAÇÃO DE CAMPO",
+                headerSubtitle: "Mini Avaliação de Risco",
+                spiafTitle: "Mini Avaliação de Risco SPIAF (BASSOPA)",
+                spiafDesc: "Lembre-se sempre da sequência oficial <strong>SPIAF</strong> de segurança. Tenha cuidado e preste atenção (BASSOPA) antes de iniciar.",
+                spiafRulesTitle: "Estrutura SPIAF",
+                spiafRules: [
+                    "<strong>S</strong>egurança - ANALISAR A TAREFA EM CAUSA NUMA PERSPECTIVA DE SEGURANÇA",
+                    "<strong>P</strong>ense - O QUE ESTÁ PRESTES A FAZER?",
+                    "<strong>I</strong>dentificar - IDENTIFICAR OS PERIGOS",
+                    "<strong>A</strong>valiar - AVALIAR O RISCO",
+                    "<strong>F</strong>azer - EXECUTAR A TAREFA",
+                    "<em>Após a conclusão da tarefa, REVER e REAVALIAR</em>"
+                ],
+                spiafBtn: "CONCORDAR E AVANÇAR",
+                formTitle: "2. Avaliação de Campo",
+                epiTitle: "⚠️ EPIS BÁSICOS DE TERRENO:",
+                epiBtnAll: "Confirmar Todos",
+                epis: ["Capacete & Óculos", "Bota de Aço", "Colete Refletor", "Luvas de Trabalho", "Calças com barras refl.", "Casaco com barras refl."],
+                activityLabel: "O QUE VAI FAZER? (ATIVIDADE)",
+                activityPlaceholder: "Descreva o trabalho...",
+                risksLabel: "RISCOS IDENTIFICADOS",
+                riskInputPlaceholder: "Outro risco...",
+                matrixTitle: "🛡️ MEDIDAS DE CONTROLO OBRIGATÓRIAS:",
+                riskLevelLabel: "NÍVEL DE RISCO GERAL",
+                btnLow: "BAIXO",
+                btnMed: "MÉDIO",
+                btnHigh: "ALTO",
+                btnBack: "Voltar",
+                btnNext: "Seguinte",
+                approvalTitle: "3. Fecho e Autorização",
+                timeLabel: "⏱️ <strong>Tempo em Campo:</strong>",
+                timeDesc: "O tempo de preenchimento e análise de risco está em conformidade com os regulamentos de HST da Grindrod.",
+                btnSubmit: "SUBMETER AGORA",
+                alertLoginName: "Por favor, introduza o seu nome para iniciar a avaliação.",
+                alertEpiCheck: "❌ Atenção: É obrigatório confirmar o uso de TODOS os EPIs básicos de terreno antes de avançar!",
+                riskCounterOne: "Risco",
+                riskCounterMany: "Riscos",
+                promptCustomMeasure: "Qual é a medida de controlo obrigatória para o risco",
+                defaultCustomMeasure: "Aplicar procedimentos de segurança específicos de campo.",
+                alertSubmissaoSucesso: "✓ Avaliação de Segurança submetida com sucesso! O descarregamento do PDF iniciará de seguida.",
+                validadoPor: "Validada por",
+                alertBaixo: "ℹ️ Risco Baixo: Esta tarefa exigirá a assinatura do Supervisor no fecho.",
+                alertMedio: "⚠️ Risco Médio: Esta tarefa exigirá a validação e assinatura do Gestor de Área.",
+                alertAlto: "🚨 ATENÇÃO: Trabalho de Alto Risco! Exigirá a assinatura de autorização do CO / CEO.",
+                labelSignSuper: "🔒 Assinatura de Validação do Supervisor",
+                placeholderSignSuper: "Nome do Supervisor Autorizado",
+                labelSignGestor: "🔒 Assinatura de Validação do Gestor",
+                placeholderSignGestor: "Nome do Gestor de Área",
+                labelSignCeo: "🔒 Assinatura de Autorização Especial (CO / CEO)",
+                placeholderSignCeo: "Nome do CO ou CEO da Empresa",
+                errorSignRequired: "❌ Erro: O nível de risco está definido como"
+            },
+            EN: {
+                loginSubtitle: "Digitalization of the Mini Risk Assessment",
+                loginLabel: "Employee / Operator",
+                loginPlaceholder: "Enter your full name",
+                loginBtn: "START FIELD ASSESSMENT",
+                headerSubtitle: "STIAD Mini Risk Assessment",
+                spiafTitle: "STIAD Mini Risk Assessment (BASSOBHA)",
+                spiafDesc: "Always remember the official <strong>STIAD</strong> safety sequence. Take care and pay attention (BASSOBHA) before starting.",
+                spiafRulesTitle: "STIAD Framework",
+                spiafRules: [
+                    "<strong>S</strong>afety - LOOK AT THE TASK AT HAND FROM A SAFETY PERSPECTIVE",
+                    "<strong>T</strong>hink - WHAT ARE YOU ABOUT TO DO?",
+                    "<strong>I</strong>dentify - IDENTIFY HAZARDS",
+                    "<strong>A</strong>ssess - ASSESS THE RISK",
+                    "<strong>D</strong>o - DO THE TASK",
+                    "<em>After the task is complete, REVIEW and REASSESS</em>"
+                ],
+                spiafBtn: "AGREE AND PROCEED",
+                formTitle: "2. Field Assessment",
+                epiTitle: "⚠️ BASIC SITE PPE:",
+                epiBtnAll: "Confirm All",
+                epis: ["Helmet & Glasses", "Steel Toe Boots", "Reflective Vest", "Safety Gloves", "Reflective Trousers", "Reflective Jacket"],
+                activityLabel: "WHAT ARE YOU GOING TO DO? (ACTIVITY)",
+                activityPlaceholder: "Describe the work...",
+                risksLabel: "IDENTIFIED RISKS",
+                riskInputPlaceholder: "Other risk...",
+                matrixTitle: "🛡️ MANDATORY CONTROL MEASURES:",
+                riskLevelLabel: "GENERAL RISK LEVEL",
+                btnLow: "LOW",
+                btnMed: "MEDIUM",
+                btnHigh: "HIGH",
+                btnBack: "Back",
+                btnNext: "Next",
+                approvalTitle: "3. Closure and Authorization",
+                timeLabel: "⏱️ <strong>Time in Field:</strong>",
+                timeDesc: "The assessment completion time complies with Grindrod's health and safety regulations.",
+                btnSubmit: "SUBMIT NOW",
+                alertLoginName: "Please enter your name to start the assessment.",
+                alertEpiCheck: "❌ Attention: You must confirm the use of ALL basic site PPE before proceeding!",
+                riskCounterOne: "Risk",
+                riskCounterMany: "Risks",
+                promptCustomMeasure: "What is the mandatory control measure for the risk",
+                defaultCustomMeasure: "Apply specific field safety procedures.",
+                alertSubmissaoSucesso: "✓ Safety Assessment successfully submitted! PDF download will follow.",
+                validadoPor: "Validated by",
+                alertBaixo: "ℹ️ Low Risk: This task will require the Supervisor's signature at closure.",
+                alertMedio: "⚠️ Medium Risk: This task will require validation and signature from the Area Manager.",
+                alertAlto: "🚨 ATTENTION: High Risk Work! Will require authorization signature from the CO / CEO.",
+                labelSignSuper: "🔒 Supervisor Validation Signature",
+                placeholderSignSuper: "Name of the Authorized Supervisor",
+                labelSignGestor: "🔒 Manager Validation Signature",
+                placeholderSignGestor: "Name of the Area Manager",
+                labelSignCeo: "🔒 Special Authorization Signature (CO / CEO)",
+                placeholderSignCeo: "Name of the Company CO or CEO",
+                errorSignRequired: "❌ Error: The risk level is set to"
+            }
+        };
+
+
+        function toggleLanguage() {
+            currentLang = (currentLang === "PT") ? "EN" : "PT";
+            document.getElementById('lang-btn-login').innerText = `🌐 ${currentLang === "PT" ? "EN" : "PT"}`;
+            document.getElementById('lang-btn-flow').innerText = `🌐 ${currentLang === "PT" ? "EN" : "PT"}`;
+            applyTranslations();
+            updateFormIntelligence(); 
+            if(!document.getElementById('screen-form').classList.contains('hidden')) {
+                setRiskLevel(currentRiskLevel === "BAIXO" || currentRiskLevel === "LOW" ? "BAIXO" : (currentRiskLevel === "MÉDIO" || currentRiskLevel === "MEDIUM" ? "MÉDIO" : "ALTO"));
+            }
+        }
+
+        function applyTranslations() {
+            const lang = translations[currentLang];
+            document.getElementById('t-login-subtitle').innerText = lang.loginSubtitle;
+            document.getElementById('t-login-label').innerText = lang.loginLabel;
+            document.getElementById('operator-name').placeholder = lang.loginPlaceholder;
+            document.getElementById('t-login-btn').innerText = lang.loginBtn;
+            document.getElementById('t-header-subtitle').innerText = lang.headerSubtitle;
+            document.getElementById('t-spiaf-title').innerText = lang.spiafTitle;
+            document.getElementById('t-spiaf-desc').innerHTML = lang.spiafDesc;
+            document.getElementById('t-spiaf-rules-title').innerText = lang.spiafRulesTitle;
+            document.getElementById('t-spiaf-btn').innerText = lang.spiafBtn;
+            
+            // Ajuste do título da exportação do PDF
+            if(currentLang === "EN") {
+                document.getElementById('pdf-title-main').innerText = "STIAD MINI RISK ASSESSMENT";
+            } else {
+                document.getElementById('pdf-title-main').innerText = "MINI AVALIAÇÃO DE RISCO (SPIAF)";
+            }
+
+            // Garante o alinhamento visual com a barra institucional vermelha de segurança da Grindrod
+            document.getElementById('spiaf-banner-style').className = "border-l-4 border-red-600 bg-red-50 p-3 rounded-r shadow-sm";
+            document.getElementById('t-spiaf-title').className = "text-sm font-bold text-red-800 uppercase";
+            document.getElementById('t-spiaf-desc').className = "text-[11px] text-red-700 mt-0.5";
+
+            let rulesHtml = "";
+            lang.spiafRules.forEach(rule => { 
+                rulesHtml += `<li class="flex items-start gap-2">🔴 <span>${rule}</span></li>`; 
+            });
+            document.getElementById('t-spiaf-rules-list').innerHTML = rulesHtml;
+
+            document.getElementById('t-form-title').innerText = lang.formTitle;
+            document.getElementById('t-epi-title').innerText = lang.epiTitle;
+            document.getElementById('t-epi-btn-all').innerText = lang.epiBtnAll;
+            document.getElementById('t-activity-label').innerText = lang.activityLabel;
+            document.getElementById('activity-textarea').placeholder = lang.activityPlaceholder;
+            document.getElementById('t-risks-label').innerText = lang.risksLabel;
+            document.getElementById('new-risk-input').placeholder = lang.riskInputPlaceholder;
+            document.getElementById('t-matrix-title').innerText = lang.matrixTitle;
+            document.getElementById('t-risk-level-label').innerText = lang.riskLevelLabel;
+            
+            document.getElementById('t-btn-low').innerText = lang.btnLow;
+            document.getElementById('t-btn-med').innerText = lang.btnMed;
+            document.getElementById('t-btn-high').innerText = lang.btnHigh;
+            document.getElementById('t-btn-back-1').innerText = lang.btnBack;
+            document.getElementById('btn-next-step').innerText = lang.btnNext;
+
+            const epiContainer = document.getElementById('epi-checkboxes-container');
+            let epiHtml = "";
+            lang.epis.forEach(epi => { epiHtml += `<label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" class="epi-checkbox w-4 h-4 text-blue-600 rounded"> ${epi}</label>`; });
+            epiContainer.innerHTML = epiHtml;
+
+            const risksGrid = document.getElementById('risks-grid');
+            const defaultRisks = currentLang === "PT" 
+                ? [{v:"Queda", t:"Queda"}, {v:"Choque", t:"Choque Elétrico"}, {v:"Esmagamento", t:"Esmagamento"}, {v:"Confinado", t:"Espaço Confinado"}]
+                : [{v:"Queda", t:"Falls"}, {v:"Choque", t:"Electrical Shock"}, {v:"Esmagamento", t:"Crushing"}, {v:"Confinado", t:"Confined Space"}];
+            
+            let risksHtml = "";
+            defaultRisks.forEach(r => { risksHtml += `<label class="flex items-center space-x-2 bg-white p-2 rounded border cursor-pointer"><input type="checkbox" value="${r.v}" onchange="updateFormIntelligence()" class="w-4 h-4 text-blue-600"> <span>${r.t}</span></label>`; });
+            risksGrid.innerHTML = risksHtml;
+
+            document.getElementById('t-approval-title').innerText = lang.approvalTitle;
+            document.getElementById('t-time-label').innerHTML = lang.timeLabel;
+            document.getElementById('t-time-desc').innerText = lang.timeDesc;
+            document.getElementById('t-btn-back-2').innerText = lang.btnBack;
+            document.getElementById('t-btn-submit').innerText = lang.btnSubmit;
+        }
+
+        function changeScreen(screenId) {
+            if(screenId === 'screen-login') {
+                document.getElementById('screen-login').classList.remove('hidden');
+                document.getElementById('main-flow-container').classList.add('hidden');
+            } else {
+                document.getElementById('screen-login').classList.add('hidden');
+                document.getElementById('main-flow-container').classList.remove('hidden');
+                document.getElementById('screen-spiaf').classList.add('hidden');
+                document.getElementById('screen-form').classList.add('hidden');
+                document.getElementById('screen-approval').classList.add('hidden');
+                document.getElementById(screenId).classList.remove('hidden');
+            }
+
+            if(screenId === 'screen-approval') {
+                const endTime = new Date();
+                const totalSeconds = Math.floor((endTime - startTime) / 1000);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                finalExecutionTime = `${minutes}m ${seconds}s`;
+                document.getElementById('time-elapsed-display').innerText = finalExecutionTime;
+
+                const label = document.getElementById('approval-label');
+                const input = document.getElementById('approver-name');
+                const block = document.getElementById('validation-signature-block');
+                const lang = translations[currentLang];
+
+                block.classList.remove('border-green-300', 'border-yellow-300', 'border-red-300', 'bg-green-50/50', 'bg-yellow-50/50', 'bg-red-50/50');
+
+                if (currentRiskLevel === "BAIXO" || currentRiskLevel === "LOW") {
+                    label.innerText = lang.labelSignSuper;
+                    label.className = "block text-xs font-bold text-green-700 uppercase";
+                    input.placeholder = lang.placeholderSignSuper;
+                    block.classList.add('border-green-300', 'bg-green-50/50');
+                } else if (currentRiskLevel === "MÉDIO" || currentRiskLevel === "MEDIUM") {
+                    label.innerText = lang.labelSignGestor;
+                    label.className = "block text-xs font-bold text-yellow-700 uppercase";
+                    input.placeholder = lang.placeholderSignGestor;
+                    block.classList.add('border-yellow-300', 'bg-yellow-50/50');
+                } else if (currentRiskLevel === "ALTO" || currentRiskLevel === "HIGH") {
+                    label.innerText = lang.labelSignCeo;
+                    label.className = "block text-xs font-bold text-red-700 uppercase";
+                    input.placeholder = lang.placeholderSignCeo;
+                    block.classList.add('border-red-300', 'bg-red-50/50');
+                }
+            }
+        }
+
+        function startEvaluation() {
+            const opName = document.getElementById('operator-name').value.trim();
+            if(opName === "") {
+                alert(translations[currentLang].alertLoginName);
+                return;
+            }
+            startTime = new Date(); 
+            changeScreen('screen-spiaf');
+        }
+
+        function checkAllEpi() {
+            const checkboxes = document.querySelectorAll('.epi-checkbox');
+            checkboxes.forEach(cb => cb.checked = true);
+        }
+
+        function addNewRisk() {
+            const input = document.getElementById('new-risk-input');
+            const riskValue = input.value.trim();
+            const lang = translations[currentLang];
+
+            if (riskValue !== "") {
+                const controlValue = prompt(`${lang.promptCustomMeasure} [${riskValue}]?`);
+                const finalControl = (controlValue && controlValue.trim() !== "") ? controlValue.trim() : lang.defaultCustomMeasure;
+                customRisksData[riskValue] = finalControl;
+
+                const grid = document.getElementById('risks-grid');
+                const label = document.createElement('label');
+                label.className = "flex items-center space-x-2 bg-orange-50 p-2 rounded border border-orange-200 cursor-pointer select-none animate-pulse-slow";
+                label.innerHTML = `<input type="checkbox" value="${riskValue}" onchange="updateFormIntelligence()" class="w-4 h-4 text-blue-600" checked> <span class="truncate">${riskValue}</span>`;
+                grid.appendChild(label);
+                
+                input.value = "";
+                updateFormIntelligence();
+            }
+        }
+
+        function updateFormIntelligence() {
+            const checkboxes = document.querySelectorAll('#risks-grid input[type="checkbox"]');
+            const panel = document.getElementById('smart-controls-panel');
+            const list = document.getElementById('controls-list');
+            const counter = document.getElementById('risk-counter');
+            const btnNext = document.getElementById('btn-next-step');
+            const lang = translations[currentLang];
+            
+            let checkedCount = 0;
+            let htmlControls = "";
+
+            checkboxes.forEach(box => {
+                if(box.checked) {
+                    checkedCount++;
+                    if(box.value === "Queda") htmlControls += currentLang === "PT" ? `<p>🟩 Uso de Arnês e Linha de Vida Obrigatório.</p>` : `<p>🟩 Safety Harness and Lifeline Required.</p>`;
+                    if(box.value === "Choque") htmlControls += currentLang === "PT" ? `<p>🟩 Confirmar isolamento elétrico e teste LOTO.</p>` : `<p>🟩 Confirm electrical isolation and LOTO verification.</p>`;
+                    if(box.value === "Esmagamento") htmlControls += currentLang === "PT" ? `<p>🟩 Manter distância da linha de fogo e raio de ação da máquina.</p>` : `<p>🟩 Keep clear of the line of fire and machine operational radius.</p>`;
+                    if(box.value === "Confinado") htmlControls += currentLang === "PT" ? `<p>🟩 Medição de Gases e vigia externo activos.</p>` : `<p>🟩 Gas testing and active external standby watch.</p>`;
+                    
+                    if(box.value !== "Queda" && box.value !== "Choque" && box.value !== "Esmagamento" && box.value !== "Confinado") {
+                        const customControl = customRisksData[box.value] || "Medida não especificada / Not specified.";
+                        htmlControls += `<p>🟩 <strong class="text-orange-600">${box.value}:</strong> ${customControl}</p>`;
+                    }
+                }
+            });
+
+            if (checkedCount > 0) {
+                counter.innerText = `${checkedCount} ${checkedCount === 1 ? lang.riskCounterOne : lang.riskCounterMany}`;
+                counter.className = "bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full scale-105 transition-all";
+                btnNext.disabled = false;
+                btnNext.className = "w-2/3 bg-[#1a365d] text-white p-3 rounded font-bold shadow hover:bg-blue-900 cursor-pointer text-sm";
+            } else {
+                counter.innerText = `0 ${lang.riskCounterMany}`;
+                counter.className = "bg-gray-400 text-white text-xs font-bold px-2 py-1 rounded-full transition-all";
+                btnNext.disabled = true;
+                btnNext.className = "w-2/3 bg-gray-400 text-white p-3 rounded font-bold cursor-not-allowed shadow text-sm";
+            }
+
+            if(htmlControls !== "") {
+                list.innerHTML = htmlControls;
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        function setRiskLevel(level) {
+            const alertBox = document.getElementById('alert-risk-level');
+            const lang = translations[currentLang];
+            alertBox.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'border-green-400', 'bg-yellow-100', 'text-yellow-800', 'border-yellow-400', 'bg-red-100', 'text-red-800', 'border-red-400', 'border');
+            alertBox.classList.add('border');
+
+            if (level === "BAIXO") {
+                currentRiskLevel = currentLang === "PT" ? "BAIXO" : "LOW";
+                alertBox.className = "bg-green-100 text-green-800 border-green-400 p-3 rounded text-xs font-semibold";
+                alertBox.innerText = lang.alertBaixo;
+            } else if (level === "MÉDIO") {
+                currentRiskLevel = currentLang === "PT" ? "MÉDIO" : "MEDIUM";
+                alertBox.className = "bg-yellow-100 text-yellow-800 border-yellow-400 p-3 rounded text-xs font-semibold";
+                alertBox.innerText = lang.alertMedio;
+            } else if (level === "ALTO") {
+                currentRiskLevel = currentLang === "PT" ? "ALTO" : "HIGH";
+                alertBox.className = "bg-red-100 text-red-800 border-red-400 p-3 rounded text-xs font-semibold animate-pulse";
+                alertBox.innerText = lang.alertAlto;
+            }
+        }
+
+        function validateScreenForm() {
+            const epis = document.querySelectorAll('.epi-checkbox');
+            let allEpisOk = true;
+            epis.forEach(cb => { if(!cb.checked) allEpisOk = false; });
+
+            if(!allEpisOk) {
+                alert(translations[currentLang].alertEpiCheck);
+                return;
+            }
+            changeScreen('screen-approval');
+        }
+
+        function generateSafetyPDF(operador, aprovador, atividade) {
+            document.getElementById('pdf-worker-name').innerText = operador;
+            document.getElementById('pdf-worker-sign').innerText = operador;
+            document.getElementById('pdf-risk-level').innerText = currentRiskLevel;
+            document.getElementById('pdf-time').innerText = finalExecutionTime;
+            document.getElementById('pdf-date').innerText = new Date().toLocaleString();
+            document.getElementById('pdf-activity').innerText = atividade !== "" ? atividade : "Atividade operacional não descrita.";
+            document.getElementById('pdf-approver-sign').innerText = aprovador;
+            
+            let cargoFinal = "Supervisor de HST / HSE Supervisor";
+            if(currentRiskLevel === "MÉDIO" || currentRiskLevel === "MEDIUM") cargoFinal = "Gestor Operacional / Area Manager";
+            if(currentRiskLevel === "ALTO" || currentRiskLevel === "HIGH") cargoFinal = "Diretor Executivo / CO CEO";
+            document.getElementById('pdf-approver-title').innerText = cargoFinal;
+
+            const activeControls = document.getElementById('controls-list').innerHTML;
+            document.getElementById('pdf-controls').innerHTML = activeControls !== "" ? activeControls : "<p>Nenhum risco crítico selecionado. Operação com EPIs Básicos.</p>";
+
+            const elementoPDF = document.getElementById('pdf-template');
+            elementoPDF.classList.remove('hidden');
+
+            const opcoes = {
+                margin:       0.5,
+                filename:     `Grindrod_Safety_Report_${operador.replace(/\s+/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opcoes).from(elementoPDF).save().then(() => {
+                elementoPDF.classList.add('hidden');
+            });
+        }
+
+        function submitForm() {
+            const opName = document.getElementById('operator-name').value.trim();
+            const approverInput = document.getElementById('approver-name').value.trim();
+            const atividadeInput = document.getElementById('activity-textarea').value.trim();
+            const lang = translations[currentLang];
+            
+            if (approverInput === "") {
+                let cargo = currentLang === "PT" ? "Supervisor" : "Supervisor";
+                if (currentRiskLevel === "MÉDIO" || currentRiskLevel === "MEDIUM") cargo = currentLang === "PT" ? "Gestor" : "Manager";
+                if (currentRiskLevel === "ALTO" || currentRiskLevel === "HIGH") cargo = "CO / CEO";
+                alert(`${lang.errorSignRequired} ${currentRiskLevel}. ${currentLang === 'PT' ? 'É obrigatório introduzir o nome do' : 'You must enter the name of the'} ${cargo} ${currentLang === 'PT' ? 'para validar a tarefa!' : 'to validate the task!'}`);
+                return;
+            }
+
+            alert(`${lang.alertSubmissaoSucesso}\n${lang.validadoPor}: ${approverInput} (${currentRiskLevel}).`);
+            
+            generateSafetyPDF(opName, approverInput, atividadeInput);
+
+            document.getElementById('approver-name').value = "";
+            document.getElementById('operator-name').value = "";
+            document.getElementById('activity-textarea').value = "";
+            customRisksData = {};
+            document.getElementById('alert-risk-level').classList.add('hidden');
+            
+            applyTranslations(); 
+            updateFormIntelligence();
+            changeScreen('screen-login');
+        }
+
+        applyTranslations();
+    </script>
+</body>
+</html>

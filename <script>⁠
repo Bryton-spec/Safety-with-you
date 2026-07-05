@@ -1,0 +1,24 @@
+        function addNewRisk() {
+            const input = document.getElementById('new-risk-input');
+            const riskValue = input.value.trim();
+            
+            if (riskValue !== "") {
+                const grid = document.getElementById('risks-grid');
+                
+                // Cria a nova estrutura de caixa de seleção idêntica às outras
+                const label = document.createElement('label');
+                label.className = "flex items-center space-x-2 bg-orange-50 p-2 rounded border border-orange-200 animate-pulse";
+                
+                // Define o HTML interno já marcado (checked) por padrão, assumindo que se o operador escreveu, o risco existe ali
+                label.innerHTML = `<input type="checkbox" value="${riskValue}" checked> <span>${riskValue}</span>`;
+                
+                // Adiciona à lista visual
+                grid.appendChild(label);
+                
+                // Limpa o campo de texto para o próximo input
+                input.value = "";
+                
+                // Pequena animação de feedback tirando o pulso após 1 segundo
+                setTimeout(() => label.classList.remove('animate-pulse'), 1000);
+            }
+        }
