@@ -36,10 +36,41 @@
         </div>
 
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 w-full space-y-4">
+            <!-- Nome -->
             <div>
                 <label id="t-login-label" class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Colaborador / Operador</label>
                 <input type="text" id="operator-name" class="w-full p-3 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white" placeholder="Introduza o seu nome completo">
             </div>
+
+            <!-- Unidade de Negócio -->
+            <div>
+                <label id="t-bu-label" class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Unidade de Negócio</label>
+                <select id="business-unit" class="w-full p-3 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer">
+                    <option value="GRINDROD GML">GRINDROD GML</option>
+                    <option value="GRINDROD TCM">GRINDROD TCM</option>
+                    <option value="GRINDROD MCTL">GRINDROD MCTL</option>
+                    <option value="GRINDROD SGM">GRINDROD SGM</option>
+                </select>
+            </div>
+
+            <!-- Empresa / Vínculo -->
+            <div>
+                <label id="t-company-label" class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Empresa / Empregador</label>
+                <select id="company-select" onchange="handleCompanyChange()" class="w-full p-3 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer">
+                    <option value="GRINDROD" id="opt-grindrod">GRINDROD (Interno)</option>
+                    <option value="AKK&AD">AKK&AD</option>
+                    <option value="MES">MES</option>
+                    <option value="OUTOTEC SPS">OUTOTEC SPS</option>
+                    <option value="OUTRA" id="opt-other">Outra Subcontratada...</option>
+                </select>
+            </div>
+
+            <!-- Campo Dinâmico para Outra Empresa -->
+            <div id="custom-company-container" class="hidden">
+                <label id="t-custom-company-label" class="block text-[11px] font-bold text-orange-600 uppercase tracking-wider mb-1">Nome da Empresa Subcontratada</label>
+                <input type="text" id="custom-company-name" class="w-full p-3 border border-orange-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-orange-50/30" placeholder="Introduza o nome da empresa">
+            </div>
+
             <button id="t-login-btn" onclick="startEvaluation()" class="w-full bg-[#1a365d] text-white p-3.5 rounded-lg font-bold shadow hover:bg-blue-900 transition-all active:scale-[0.99] cursor-pointer text-sm tracking-wide">
                 INICIAR AVALIAÇÃO DE CAMPO
             </button>
@@ -181,6 +212,8 @@
 
         <div class="bg-gray-50 p-4 rounded border grid grid-cols-2 gap-4">
             <p><strong>Operador / Worker:</strong> <span id="pdf-worker-name"></span></p>
+            <p><strong>Unidade de Negócio / BU:</strong> <span id="pdf-bu" class="font-bold"></span></p>
+            <p><strong>Empresa / Employer:</strong> <span id="pdf-company" class="font-bold"></span></p>
             <p><strong>Nível de Risco / Risk Level:</strong> <span id="pdf-risk-level" class="font-bold"></span></p>
             <p><strong>Tempo em Campo / Time:</strong> <span id="pdf-time"></span></p>
             <p><strong>Data de Emissão / Date:</strong> <span id="pdf-date"></span></p>
@@ -217,15 +250,21 @@
         let customRisksData = {};
         let finalExecutionTime = "";
 
-               const translations = {
+        const translations = {
             PT: {
                 loginSubtitle: "Digitalização da Mini Avaliação de Risco",
                 loginLabel: "Colaborador / Operador",
                 loginPlaceholder: "Introduza o seu nome completo",
+                buLabel: "Unidade de Negócio",
+                companyLabel: "Empresa / Empregador",
+                optGrindrod: "GRINDROD (Interno)",
+                optOther: "Outra Subcontratada...",
+                customCompanyLabel: "Nome da Empresa Subcontratada",
+                customCompanyPlaceholder: "Introduza o nome da empresa",
                 loginBtn: "INICIAR AVALIAÇÃO DE CAMPO",
                 headerSubtitle: "Mini Avaliação de Risco",
-                spiafTitle: "Mini Avaliação de Risco SPIAF (BASSOPA)",
-                spiafDesc: "Lembre-se sempre da sequência oficial <strong>SPIAF</strong> de segurança. Tenha cuidado e preste atenção (BASSOPA) antes de iniciar.",
+                spiafTitle: "Mini Avaliação de Risco SPIAF (PASSOP)",
+                spiafDesc: "Lembre-se sempre da sequência oficial <strong>SPIAF</strong> de segurança. Tenha cuidado e preste atenção (Passop) antes de iniciar.",
                 spiafRulesTitle: "Estrutura SPIAF",
                 spiafRules: [
                     "<strong>S</strong>egurança - ANALISAR A TAREFA EM CAUSA NUMA PERSPECTIVA DE SEGURANÇA",
@@ -256,6 +295,7 @@
                 timeDesc: "O tempo de preenchimento e análise de risco está em conformidade com os regulamentos de HST da Grindrod.",
                 btnSubmit: "SUBMETER AGORA",
                 alertLoginName: "Por favor, introduza o seu nome para iniciar a avaliação.",
+                alertCustomCompany: "Por favor, digite o nome da empresa subcontratada.",
                 alertEpiCheck: "❌ Atenção: É obrigatório confirmar o uso de TODOS os EPIs básicos de terreno antes de avançar!",
                 riskCounterOne: "Risco",
                 riskCounterMany: "Riscos",
@@ -278,10 +318,16 @@
                 loginSubtitle: "Digitalization of the Mini Risk Assessment",
                 loginLabel: "Employee / Operator",
                 loginPlaceholder: "Enter your full name",
+                buLabel: "Business Unit",
+                companyLabel: "Company / Employer",
+                optGrindrod: "GRINDROD (Internal)",
+                optOther: "Other Subcontractor...",
+                customCompanyLabel: "Subcontractor Company Name",
+                customCompanyPlaceholder: "Enter company name",
                 loginBtn: "START FIELD ASSESSMENT",
                 headerSubtitle: "STIAD Mini Risk Assessment",
-                spiafTitle: "STIAD Mini Risk Assessment (BASSOBHA)",
-                spiafDesc: "Always remember the official <strong>STIAD</strong> safety sequence. Take care and pay attention (BASSOBHA) before starting.",
+                spiafTitle: "STIAD Mini Risk Assessment (PASSOP)",
+                spiafDesc: "Always remember the official <strong>STIAD</strong> safety sequence. Take care and pay attention (Bassopa) before starting.",
                 spiafRulesTitle: "STIAD Framework",
                 spiafRules: [
                     "<strong>S</strong>afety - LOOK AT THE TASK AT HAND FROM A SAFETY PERSPECTIVE",
@@ -312,6 +358,7 @@
                 timeDesc: "The assessment completion time complies with Grindrod's health and safety regulations.",
                 btnSubmit: "SUBMIT NOW",
                 alertLoginName: "Please enter your name to start the assessment.",
+                alertCustomCompany: "Please enter the subcontractor company name.",
                 alertEpiCheck: "❌ Attention: You must confirm the use of ALL basic site PPE before proceeding!",
                 riskCounterOne: "Risk",
                 riskCounterMany: "Risks",
@@ -332,7 +379,6 @@
             }
         };
 
-
         function toggleLanguage() {
             currentLang = (currentLang === "PT") ? "EN" : "PT";
             document.getElementById('lang-btn-login').innerText = `🌐 ${currentLang === "PT" ? "EN" : "PT"}`;
@@ -344,11 +390,30 @@
             }
         }
 
+        function handleCompanyChange() {
+            const companySelect = document.getElementById('company-select');
+            const customContainer = document.getElementById('custom-company-container');
+            
+            if (companySelect.value === "OUTRA") {
+                customContainer.classList.remove('hidden');
+            } else {
+                customContainer.classList.add('hidden');
+            }
+        }
+
         function applyTranslations() {
             const lang = translations[currentLang];
             document.getElementById('t-login-subtitle').innerText = lang.loginSubtitle;
             document.getElementById('t-login-label').innerText = lang.loginLabel;
             document.getElementById('operator-name').placeholder = lang.loginPlaceholder;
+            
+            document.getElementById('t-bu-label').innerText = lang.buLabel;
+            document.getElementById('t-company-label').innerText = lang.companyLabel;
+            document.getElementById('opt-grindrod').innerText = lang.optGrindrod;
+            document.getElementById('opt-other').innerText = lang.optOther;
+            document.getElementById('t-custom-company-label').innerText = lang.customCompanyLabel;
+            document.getElementById('custom-company-name').placeholder = lang.customCompanyPlaceholder;
+            
             document.getElementById('t-login-btn').innerText = lang.loginBtn;
             document.getElementById('t-header-subtitle').innerText = lang.headerSubtitle;
             document.getElementById('t-spiaf-title').innerText = lang.spiafTitle;
@@ -356,14 +421,12 @@
             document.getElementById('t-spiaf-rules-title').innerText = lang.spiafRulesTitle;
             document.getElementById('t-spiaf-btn').innerText = lang.spiafBtn;
             
-            // Ajuste do título da exportação do PDF
             if(currentLang === "EN") {
                 document.getElementById('pdf-title-main').innerText = "STIAD MINI RISK ASSESSMENT";
             } else {
                 document.getElementById('pdf-title-main').innerText = "MINI AVALIAÇÃO DE RISCO (SPIAF)";
             }
 
-            // Garante o alinhamento visual com a barra institucional vermelha de segurança da Grindrod
             document.getElementById('spiaf-banner-style').className = "border-l-4 border-red-600 bg-red-50 p-3 rounded-r shadow-sm";
             document.getElementById('t-spiaf-title').className = "text-sm font-bold text-red-800 uppercase";
             document.getElementById('t-spiaf-desc').className = "text-[11px] text-red-700 mt-0.5";
@@ -464,6 +527,13 @@
                 alert(translations[currentLang].alertLoginName);
                 return;
             }
+
+            const companySelect = document.getElementById('company-select').value;
+            if(companySelect === "OUTRA" && document.getElementById('custom-company-name').value.trim() === "") {
+                alert(translations[currentLang].alertCustomCompany);
+                return;
+            }
+
             startTime = new Date(); 
             changeScreen('screen-spiaf');
         }
@@ -573,9 +643,11 @@
             changeScreen('screen-approval');
         }
 
-        function generateSafetyPDF(operador, aprovador, atividade) {
+        function generateSafetyPDF(operador, bu, empresa, aprovador, atividade) {
             document.getElementById('pdf-worker-name').innerText = operador;
             document.getElementById('pdf-worker-sign').innerText = operador;
+            document.getElementById('pdf-bu').innerText = bu;
+            document.getElementById('pdf-company').innerText = empresa;
             document.getElementById('pdf-risk-level').innerText = currentRiskLevel;
             document.getElementById('pdf-time').innerText = finalExecutionTime;
             document.getElementById('pdf-date').innerText = new Date().toLocaleString();
@@ -608,6 +680,16 @@
 
         function submitForm() {
             const opName = document.getElementById('operator-name').value.trim();
+            const buSelected = document.getElementById('business-unit').value;
+            const companySelect = document.getElementById('company-select').value;
+            
+            let finalCompany = companySelect;
+            if(companySelect === "OUTRA") {
+                finalCompany = document.getElementById('custom-company-name').value.trim().toUpperCase();
+            } else if(companySelect === "GRINDROD") {
+                finalCompany = buSelected; // Mapeia direto para a BU se for interno
+            }
+
             const approverInput = document.getElementById('approver-name').value.trim();
             const atividadeInput = document.getElementById('activity-textarea').value.trim();
             const lang = translations[currentLang];
@@ -622,11 +704,15 @@
 
             alert(`${lang.alertSubmissaoSucesso}\n${lang.validadoPor}: ${approverInput} (${currentRiskLevel}).`);
             
-            generateSafetyPDF(opName, approverInput, atividadeInput);
+            generateSafetyPDF(opName, buSelected, finalCompany, approverInput, atividadeInput);
 
+            // Resetar Form
             document.getElementById('approver-name').value = "";
             document.getElementById('operator-name').value = "";
+            document.getElementById('custom-company-name').value = "";
             document.getElementById('activity-textarea').value = "";
+            document.getElementById('company-select').value = "GRINDROD";
+            handleCompanyChange();
             customRisksData = {};
             document.getElementById('alert-risk-level').classList.add('hidden');
             
